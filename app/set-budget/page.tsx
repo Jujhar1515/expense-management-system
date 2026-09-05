@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 export default function SetBudgetPage() {
   const router = useRouter();
@@ -40,18 +41,19 @@ export default function SetBudgetPage() {
   };
 
   return (
-    <main className="p-10 max-w-md mx-auto">
+    <main className="min-h-screen bg-slate-50 px-6 py-12">
+  <div className="max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
       <h1 className="text-3xl font-bold mb-6">Set Monthly Budget</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-1">Budget Amount ($)</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Budget Amount ($)</label>
           <input
             type="number"
             step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="border p-2 w-full"
+            className="w-full border border-slate-300 rounded-xl px-4 py-3 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             required
           />
         </div>
@@ -62,20 +64,27 @@ export default function SetBudgetPage() {
             type="date"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="border p-2 w-full"
+            className="w-full border border-slate-300 rounded-xl px-4 py-3 mt-1 bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition shadow-sm"
         >
           Save Budget
         </button>
+        <Link
+  href="/dashboard"
+  className="block w-full text-center mt-3 border border-slate-300 text-slate-700 py-3 rounded-xl font-semibold hover:bg-slate-50 transition"
+>
+  ← Back to Dashboard
+</Link>
       </form>
 
       {message && <p className="mt-4">{message}</p>}
+      </div>
     </main>
   );
 }
