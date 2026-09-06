@@ -29,6 +29,9 @@ export default function DashboardPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(
+  new Date().toISOString().slice(0, 7)
+);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -43,36 +46,51 @@ export default function DashboardPage() {
 
       setEmail(user.email ?? "");
 
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("id, amount, category, description, expense_date")
-        .eq("user_id", user.id)
-        .order("expense_date", { ascending: false });
+const [year, month] = selectedMonth.split("-").map(Number);
+
+const firstDayOfMonth = new Date(year, month - 1, 1);
+const firstDayOfNextMonth = new Date(year, month, 1);
+
+const startDate = firstDayOfMonth.toISOString().split("T")[0];
+const endDate = firstDayOfNextMonth.toISOString().split("T")[0];
+
+const { data, error } = await supabase
+  .from("expenses")
+  .select("id, amount, category, description, expense_date")
+  .eq("user_id", user.id)
+  .gte("expense_date", startDate)
+  .lt("expense_date", endDate)
+  .order("expense_date", { ascending: false });
 
       if (error) {
         console.error("Error loading expenses:", error.message);
       } else {
         setExpenses(data ?? []);
       }
-      const { data: budgetData, error: budgetError } = await supabase
-        .from("budget")
-        .select("amount")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+const { data: budgetData, error: budgetError } = await supabase
+  .from("budget")
+  .select("amount")
+  .eq("user_id", user.id)
+  .gte("month", startDate)
+  .lt("month", endDate)
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .maybeSingle();
 
-       if (budgetError) {
-            console.error("Error loading budget:", budgetError.message);
-     } else if (budgetData) {
-        setBudget(Number(budgetData.amount));
+if (budgetError) {
+  console.error("Error loading budget:", budgetError.message);
+  setBudget(0);
+} else if (budgetData) {
+  setBudget(Number(budgetData.amount));
+} else {
+  setBudget(0);
 }
 
       setLoading(false);
     };
 
     loadDashboard();
-  }, [router]);
+  }, [router , selectedMonth]);
   const handleDelete = async (id: number) => {
   const { error } = await supabase
     .from("expenses")
@@ -160,7 +178,58 @@ const budgetChartData = [
     Logout
   </button>
 </div>
+ <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <div>
+    <p className="text-sm font-semibold text-slate-700">
+      View Month
+    </p>
 
+    <p className="text-sm text-slate-400">
+      Select a month to view its budget and expenses.
+    </p>
+  </div>
+
+<div className="flex gap-3">
+  <select
+    value={selectedMonth.split("-")[1]}
+    onChange={(e) => {
+      const year = selectedMonth.split("-")[0];
+      setSelectedMonth(`${year}-${e.target.value}`);
+    }}
+    className="border border-slate-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="01">January</option>
+    <option value="02">February</option>
+    <option value="03">March</option>
+    <option value="04">April</option>
+    <option value="05">May</option>
+    <option value="06">June</option>
+    <option value="07">July</option>
+    <option value="08">August</option>
+    <option value="09">September</option>
+    <option value="10">October</option>
+    <option value="11">November</option>
+    <option value="12">December</option>
+  </select>
+
+<select
+  value={selectedMonth.split("-")[0]}
+  onChange={(e) => {
+    const month = selectedMonth.split("-")[1];
+    setSelectedMonth(`${e.target.value}-${month}`);
+  }}
+  className="border border-slate-300 rounded-xl px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+>
+  {Array.from({ length: 51 }, (_, index) => 2000 + index).map(
+    (year) => (
+      <option key={year} value={year}>
+        {year}
+      </option>
+    )
+  )}
+</select>
+</div>
+</div>
 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
 
   <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">

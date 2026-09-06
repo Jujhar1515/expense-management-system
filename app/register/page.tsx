@@ -10,8 +10,32 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setMessage("");
+
+  try {
+    const checkResponse = await fetch("/api/check-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    });
+
+    const checkData = await checkResponse.json();
+
+    if (!checkResponse.ok) {
+      setMessage("Unable to check email. Please try again.");
+      return;
+    }
+
+    if (checkData.exists) {
+      setMessage("This email is already in use. Please login instead.");
+      return;
+    }
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -28,8 +52,11 @@ export default function RegisterPage() {
     } else {
       setMessage("Registration successful. Please check your email.");
     }
-  };
-
+  } catch (error) {
+    console.error(error);
+    setMessage("Something went wrong. Please try again.");
+  }
+};
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-16">
   <div className="max-w-md mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
